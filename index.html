@@ -1,689 +1,108 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <base target="_top">
+const SHEET_NAME = 'Sheet1';
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+function doGet(e) {
+  // 1. Serves the HTML file when opened directly via Apps Script Web App
+  if (!e || !e.parameter || !e.parameter.action) {
+    return HtmlService
+      .createHtmlOutputFromFile('index')
+      .setTitle('AES Secret Message Feed')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
 
-  <title>AES Secret Message Feed</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 30px 20px;
-    }
-
-    h1 {
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #94a3b8;
-      margin-bottom: 30px;
-    }
-
-    .card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 22px;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin: 14px 0 7px;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: white;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #38bdf8;
-    }
-
-    button {
-      border: 0;
-      border-radius: 8px;
-      padding: 11px 18px;
-      margin-top: 15px;
-      background: #0ea5e9;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0284c7;
-    }
-
-    button.secondary {
-      background: #475569;
-    }
-
-    button.secondary:hover {
-      background: #64748b;
-    }
-
-    button.danger {
-      background: #dc2626;
-    }
-
-    .message {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 18px;
-      margin-top: 15px;
-    }
-
-    .message-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .username {
-      font-weight: bold;
-      color: #38bdf8;
-    }
-
-    .timestamp {
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    .ciphertext {
-      background: #020617;
-      border-radius: 7px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 12px;
-      word-break: break-all;
-      color: #cbd5e1;
-    }
-
-    .decrypt-area {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .decrypt-area input {
-      flex: 1;
-    }
-
-    .result {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 7px;
-      display: none;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .success {
-      display: block;
-      background: #064e3b;
-      color: #a7f3d0;
-    }
-
-    .error {
-      display: block;
-      background: #450a0a;
-      color: #fecaca;
-    }
-
-    .status {
-      margin-top: 12px;
-      min-height: 20px;
-      color: #94a3b8;
-    }
-
-    .empty {
-      text-align: center;
-      color: #64748b;
-      padding: 30px;
-    }
-
-    .warning {
-      background: #422006;
-      color: #fed7aa;
-      border: 1px solid #9a3412;
-      padding: 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    .feed-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-  </style>
-</head>
-
-<body>
-
-<div class="container">
-
-  <h1>🔐 AES Secret Message Feed</h1>
-
-  <div class="subtitle">
-    Encrypt a message with AES and publish the ciphertext.
-    Other users can attempt to decrypt it with the secret key.
-  </div>
-
-  <div class="warning">
-    <strong>Demo warning:</strong>
-    This application stores the plaintext and secret key in the
-    Google Sheet because that was specified for this project.
-    Do not use it for genuinely sensitive information.
-  </div>
-
-  <!-- CREATE MESSAGE -->
-  <div class="card">
-
-    <h2>Publish a Message</h2>
-
-    <label for="username">Username</label>
-    <input
-      id="username"
-      type="text"
-      placeholder="Enter your username"
-      maxlength="50">
-
-    <label for="plaintext">Message</label>
-    <textarea
-      id="plaintext"
-      placeholder="Enter the secret message..."></textarea>
-
-    <label for="secretKey">Secret Key</label>
-    <input
-      id="secretKey"
-      type="password"
-      placeholder="Enter a secret key">
-
-    <button onclick="publishMessage()">
-      🔒 Encrypt & Publish
-    </button>
-
-    <div id="publishStatus" class="status"></div>
-
-  </div>
-
-
-  <!-- PUBLIC FEED -->
-  <div class="card">
-
-    <div class="feed-header">
-      <h2>🌐 Public Feed</h2>
-
-      <button
-        class="secondary"
-        onclick="loadMessages()">
-        Refresh
-      </button>
-    </div>
-
-    <div id="feed">
-      <div class="empty">
-        Loading messages...
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<script>
-
-/*
- * AES implementation
- *
- * We use:
- *   AES-GCM
- *   256-bit key
- *   Random 96-bit IV
- *
- * The supplied password/key is converted into a
- * 256-bit AES key using SHA-256.
- */
-
-async function deriveKey(secret) {
-  const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiXJtsRrPHDasZP6DjFuLk5ahhJv-mA28e_819KLfnnJvBzr9VWLXxfUabjWVywOtj/exec"
-  const encoder = new TextEncoder();
-
-  const keyMaterial = await crypto.subtle.digest(
-    "SHA-256",
-    encoder.encode(secret)
-  );
-
-  return crypto.subtle.importKey(
-    "raw",
-    keyMaterial,
-    {
-      name: "AES-GCM"
-    },
-    false,
-    ["encrypt", "decrypt"]
-  );
+  // 2. Returns feed data when requested externally via fetch()
+  if (e.parameter.action === 'getMessages') {
+    const data = getMessages();
+    return ContentService
+      .createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-
-/*
- * Convert ArrayBuffer to Base64.
- */
-function arrayBufferToBase64(buffer) {
-
-  const bytes = new Uint8Array(buffer);
-
-  let binary = "";
-
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-
-  return btoa(binary);
-}
-
-
-/*
- * Convert Base64 to Uint8Array.
- */
-function base64ToUint8Array(base64) {
-
-  const binary = atob(base64);
-
-  const bytes = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return bytes;
-}
-
-
-/*
- * Encrypt plaintext.
- *
- * Ciphertext format:
- *
- * BASE64(IV):BASE64(CIPHERTEXT)
- */
-async function encryptMessage(message, secret) {
-
-  const key = await deriveKey(secret);
-
-  const encoder = new TextEncoder();
-
-  // AES-GCM recommends a unique random 96-bit IV.
-  const iv = crypto.getRandomValues(
-    new Uint8Array(12)
-  );
-
-  const encrypted = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv: iv
-    },
-    key,
-    encoder.encode(message)
-  );
-
-  return (
-    arrayBufferToBase64(iv) +
-    ":" +
-    arrayBufferToBase64(encrypted)
-  );
-}
-
-
-/*
- * Decrypt ciphertext.
- */
-async function decryptMessage(ciphertext, secret) {
-
-  const parts = ciphertext.split(":");
-
-  if (parts.length !== 2) {
-    throw new Error("Invalid ciphertext format.");
-  }
-
-  const iv = base64ToUint8Array(parts[0]);
-
-  const encrypted = base64ToUint8Array(parts[1]);
-
-  const key = await deriveKey(secret);
-
-  const decrypted = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv
-    },
-    key,
-    encrypted
-  );
-
-  return new TextDecoder().decode(decrypted);
-}
-
-
-/*
- * Publish encrypted message.
- */
-async function publishMessage() {
-
-  const username =
-    document.getElementById("username").value.trim();
-
-  const plaintext =
-    document.getElementById("plaintext").value;
-
-  const secretKey =
-    document.getElementById("secretKey").value;
-
-  const status =
-    document.getElementById("publishStatus");
-
-  if (!username) {
-    status.textContent = "Please enter a username.";
-    return;
-  }
-
-  if (!plaintext) {
-    status.textContent = "Please enter a message.";
-    return;
-  }
-
-  if (!secretKey) {
-    status.textContent = "Please enter a secret key.";
-    return;
-  }
-
+function doPost(e) {
   try {
-
-    status.textContent = "Encrypting...";
-
-    const ciphertext = await encryptMessage(
-      plaintext,
-      secretKey
-    );
-
-    status.textContent = "Saving message...";
-
-    // Replace the google.script.run block inside publishMessage() with:
-if (typeof google !== 'undefined' && google.script && google.script.run) {
-  google.script.run
-    .withSuccessHandler(function(response) {
-      status.textContent = "✓ Message encrypted and published.";
-      document.getElementById("plaintext").value = "";
-      document.getElementById("secretKey").value = "";
-      loadMessages();
-    })
-    .withFailureHandler(function(error) {
-      status.textContent = "Error: " + error.message;
-    })
-    .saveMessage({
-      username: username,
-      ciphertext: ciphertext,
-      plaintext: plaintext,
-      key: secretKey
-    });
-} else {
-  // External / Local environment using fetch API
-  fetch(APP_SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      username: username,
-      ciphertext: ciphertext,
-      plaintext: plaintext,
-      key: secretKey
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      status.textContent = "✓ Message encrypted and published.";
-      document.getElementById("plaintext").value = "";
-      document.getElementById("secretKey").value = "";
-      loadMessages();
-    } else {
-      status.textContent = "Error: " + data.error;
-    }
-  })
-  .catch(err => {
-    status.textContent = "Error: " + err.message;
-  });
+    const contents = JSON.parse(e.postData.contents);
+    const result = saveMessage(contents);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-/*
- * Load public feed.
- */
-function loadMessages() {
+function setup() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
 
-  const feed =
-    document.getElementById("feed");
-
-  feed.innerHTML =
-    '<div class="empty">Loading messages...</div>';
-
-  // Replace the google.script.run block inside loadMessages() with:
-if (typeof google !== 'undefined' && google.script && google.script.run) {
-  google.script.run
-    .withSuccessHandler(renderMessages)
-    .withFailureHandler(function(error) {
-      feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
-    })
-    .getMessages();
-} else {
-  // External / Local environment using fetch API
-  fetch(APP_SCRIPT_URL + "?action=getMessages")
-    .then(res => res.json())
-    .then(renderMessages)
-    .catch(error => {
-      feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
-    });
-}
-
-
-/*
- * Render messages.
- */
-function renderMessages(messages) {
-
-  const feed =
-    document.getElementById("feed");
-
-  if (!messages || messages.length === 0) {
-
-    feed.innerHTML =
-      '<div class="empty">' +
-      'No messages have been published yet.' +
-      '</div>';
-
-    return;
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
   }
 
-  feed.innerHTML = "";
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Timestamp',
+      'Username',
+      'Ciphertext',
+      'Plaintext',
+      'key'
+    ]);
+  }
 
-  messages.forEach(function(message) {
-
-    const wrapper =
-      document.createElement("div");
-
-    wrapper.className = "message";
-
-    wrapper.innerHTML = `
-      <div class="message-header">
-        <span class="username">
-          👤 ${escapeHtml(message.username)}
-        </span>
-
-        <span class="timestamp">
-          ${escapeHtml(message.timestamp)}
-        </span>
-      </div>
-
-      <div class="ciphertext">
-        ${escapeHtml(message.ciphertext)}
-      </div>
-
-      <div class="decrypt-area">
-
-        <input
-          type="password"
-          class="key-input"
-          placeholder="Try the secret key">
-
-        <button class="decrypt-button">
-          🔓 Decrypt
-        </button>
-
-      </div>
-
-      <div class="result"></div>
-    `;
-
-    const keyInput =
-      wrapper.querySelector(".key-input");
-
-    const decryptButton =
-      wrapper.querySelector(".decrypt-button");
-
-    const result =
-      wrapper.querySelector(".result");
-
-    decryptButton.addEventListener(
-      "click",
-      async function() {
-
-        const key =
-          keyInput.value;
-
-        if (!key) {
-          showResult(
-            result,
-            "Please enter a key.",
-            false
-          );
-          return;
-        }
-
-        try {
-
-          decryptButton.disabled = true;
-          decryptButton.textContent = "Decrypting...";
-
-          const plaintext =
-            await decryptMessage(
-              message.ciphertext,
-              key
-            );
-
-          showResult(
-            result,
-            "✓ Decrypted message:\n\n" + plaintext,
-            true
-          );
-
-        } catch (error) {
-
-          showResult(
-            result,
-            "✗ Incorrect key or corrupted ciphertext.",
-            false
-          );
-
-        } finally {
-
-          decryptButton.disabled = false;
-          decryptButton.textContent = "🔓 Decrypt";
-
-        }
-
-      }
-    );
-
-    feed.appendChild(wrapper);
-
-  });
+  sheet.setFrozenRows(1);
 }
 
+function saveMessage(data) {
+  if (!data) throw new Error('No message data supplied.');
 
-/*
- * Display decrypt result.
- */
-function showResult(element, text, success) {
+  const username = String(data.username || '').trim();
+  const ciphertext = String(data.ciphertext || '').trim();
+  const plaintext = String(data.plaintext || '');
+  const key = String(data.key || '');
 
-  element.textContent = text;
+  if (!username) throw new Error('Username is required.');
+  if (!ciphertext) throw new Error('Ciphertext is required.');
+  if (!key) throw new Error('Secret key is required.');
 
-  element.className =
-    "result " +
-    (success ? "success" : "error");
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
 
+  if (!sheet) {
+    setup();
+    sheet = ss.getSheetByName(SHEET_NAME);
+  }
+
+  sheet.appendRow([new Date(), username, ciphertext, plaintext, key]);
+
+  return { success: true, message: 'Message published successfully.' };
 }
 
+function getMessages() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
 
-/*
- * Prevent HTML injection when displaying usernames
- * and ciphertext.
- */
-function escapeHtml(value) {
+  if (!sheet || sheet.getLastRow() < 2) return [];
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  const values = sheet
+    .getRange(2, 1, sheet.getLastRow() - 1, 5)
+    .getValues();
 
+  return values
+    .reverse()
+    .map(function(row, index) {
+      return {
+        id: index,
+        timestamp: row[0]
+          ? Utilities.formatDate(
+              new Date(row[0]),
+              Session.getScriptTimeZone(),
+              'yyyy-MM-dd HH:mm:ss'
+            )
+          : '',
+        username: String(row[1] || ''),
+        ciphertext: String(row[2] || '')
+      };
+    });
 }
-
-
-/*
- * Load feed when page opens.
- */
-window.addEventListener(
-  "load",
-  loadMessages
-);
-
-</script>
-
-</body>
-</html>
