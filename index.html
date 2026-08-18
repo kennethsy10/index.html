@@ -446,39 +446,50 @@ async function publishMessage() {
 
     status.textContent = "Saving message...";
 
-    google.script.run
-      .withSuccessHandler(function(response) {
-
-        status.textContent =
-          "✓ Message encrypted and published.";
-
-        document.getElementById("plaintext").value = "";
-        document.getElementById("secretKey").value = "";
-
-        loadMessages();
-
-      })
-      .withFailureHandler(function(error) {
-
-        status.textContent =
-          "Error: " + error.message;
-
-      })
-      .saveMessage({
-        username: username,
-        ciphertext: ciphertext,
-        plaintext: plaintext,
-        key: secretKey
-      });
-
-  } catch (error) {
-
-    status.textContent =
-      "Encryption error: " + error.message;
-
-  }
+    // Replace the google.script.run block inside publishMessage() with:
+if (typeof google !== 'undefined' && google.script && google.script.run) {
+  google.script.run
+    .withSuccessHandler(function(response) {
+      status.textContent = "✓ Message encrypted and published.";
+      document.getElementById("plaintext").value = "";
+      document.getElementById("secretKey").value = "";
+      loadMessages();
+    })
+    .withFailureHandler(function(error) {
+      status.textContent = "Error: " + error.message;
+    })
+    .saveMessage({
+      username: username,
+      ciphertext: ciphertext,
+      plaintext: plaintext,
+      key: secretKey
+    });
+} else {
+  // External / Local environment using fetch API
+  fetch(APP_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      username: username,
+      ciphertext: ciphertext,
+      plaintext: plaintext,
+      key: secretKey
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      status.textContent = "✓ Message encrypted and published.";
+      document.getElementById("plaintext").value = "";
+      document.getElementById("secretKey").value = "";
+      loadMessages();
+    } else {
+      status.textContent = "Error: " + data.error;
+    }
+  })
+  .catch(err => {
+    status.textContent = "Error: " + err.message;
+  });
 }
-
 
 /*
  * Load public feed.
