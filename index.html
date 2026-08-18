@@ -502,17 +502,22 @@ function loadMessages() {
   feed.innerHTML =
     '<div class="empty">Loading messages...</div>';
 
+  // Replace the google.script.run block inside loadMessages() with:
+if (typeof google !== 'undefined' && google.script && google.script.run) {
   google.script.run
     .withSuccessHandler(renderMessages)
     .withFailureHandler(function(error) {
-
-      feed.innerHTML =
-        '<div class="empty">Unable to load messages: ' +
-        escapeHtml(error.message) +
-        '</div>';
-
+      feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
     })
     .getMessages();
+} else {
+  // External / Local environment using fetch API
+  fetch(APP_SCRIPT_URL + "?action=getMessages")
+    .then(res => res.json())
+    .then(renderMessages)
+    .catch(error => {
+      feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
+    });
 }
 
 
