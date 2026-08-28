@@ -1,469 +1,253 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AES Secret Message Feed</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BURGER HUB - Inventory System</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
+    /* Header Styling */
+    header { background: #1e293b; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+    .brand { font-size: 18px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 8px; }
+    
+    /* Navigation Pane (7 Features Horizontal Scroll) */
+    .nav-bar { display: flex; background: #1e293b; overflow-x: auto; border-bottom: 2px solid #334155; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    .nav-btn { background: none; border: none; color: #94a3b8; padding: 12px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .nav-btn.active { color: #f59e0b; border-bottom: 3px solid #f59e0b; }
 
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 30px 20px;
-    }
+    /* Container Layout */
+    .container { padding: 16px; flex: 1; max-width: 800px; margin: 0 auto; width: 100%; }
+    .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
 
-    h1 {
-      margin-bottom: 8px;
-    }
+    /* Inputs & Buttons */
+    label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 8px; display: block; }
+    input, select, button { width: 100%; padding: 12px; margin-top: 4px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 14px; }
+    button.btn-amber { background: #f59e0b; color: #0f172a; border: none; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    button.btn-danger { background: #ef4444; color: #fff; border: none; font-weight: 700; cursor: pointer; padding: 6px 12px; width: auto; font-size: 12px; border-radius: 6px; }
 
-    .subtitle {
-      color: #94a3b8;
-      margin-bottom: 30px;
-    }
+    /* Metric Grids */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+    .metric-box { background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; }
+    .metric-val { font-size: 20px; font-weight: 800; color: #f59e0b; margin-top: 4px; }
 
-    .card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 22px;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
+    /* Tables */
+    .table-responsive { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background: #0f172a; color: #f59e0b; padding: 10px; border-bottom: 1px solid #334155; }
+    td { padding: 10px; border-bottom: 1px solid #334155; color: #cbd5e1; }
 
-    label {
-      display: block;
-      font-weight: bold;
-      margin: 14px 0 7px;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: white;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #38bdf8;
-    }
-
-    button {
-      border: 0;
-      border-radius: 8px;
-      padding: 11px 18px;
-      margin-top: 15px;
-      background: #0ea5e9;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0284c7;
-    }
-
-    button.secondary {
-      background: #475569;
-    }
-
-    button.secondary:hover {
-      background: #64748b;
-    }
-
-    .message {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 18px;
-      margin-top: 15px;
-    }
-
-    .message-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .username {
-      font-weight: bold;
-      color: #38bdf8;
-    }
-
-    .timestamp {
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    .ciphertext {
-      background: #020617;
-      border-radius: 7px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 12px;
-      word-break: break-all;
-      color: #cbd5e1;
-    }
-
-    .decrypt-area {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .decrypt-area input {
-      flex: 1;
-    }
-
-    .result {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 7px;
-      display: none;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .success {
-      display: block;
-      background: #064e3b;
-      color: #a7f3d0;
-    }
-
-    .error {
-      display: block;
-      background: #450a0a;
-      color: #fecaca;
-    }
-
-    .status {
-      margin-top: 12px;
-      min-height: 20px;
-      color: #94a3b8;
-    }
-
-    .empty {
-      text-align: center;
-      color: #64748b;
-      padding: 30px;
-    }
-
-    .warning {
-      background: #422006;
-      color: #fed7aa;
-      border: 1px solid #9a3412;
-      padding: 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    .feed-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
+    .hidden { display: none !important; }
+    .login-wrapper { display: flex; align-items: center; justify-content: center; min-height: 90vh; }
   </style>
 </head>
-
 <body>
 
-<div class="container">
-
-  <h1>🔐 AES Secret Message Feed</h1>
-
-  <div class="subtitle">
-    Encrypt a message with AES and publish the ciphertext.
-    Other users can attempt to decrypt it with the secret key.
-  </div>
-
-  <div class="warning">
-    <strong>Demo warning:</strong>
-    This application stores the plaintext and secret key in the
-    Google Sheet because that was specified for this project.
-    Do not use it for genuinely sensitive information.
-  </div>
-
-  <!-- CREATE MESSAGE -->
-  <div class="card">
-    <h2>Publish a Message</h2>
-
-    <label for="username">Username</label>
-    <input id="username" type="text" placeholder="Enter your username" maxlength="50">
-
-    <label for="plaintext">Message</label>
-    <textarea id="plaintext" placeholder="Enter the secret message..."></textarea>
-
-    <label for="secretKey">Secret Key</label>
-    <input id="secretKey" type="password" placeholder="Enter a secret key">
-
-    <button onclick="publishMessage()">
-      🔒 Encrypt & Publish
-    </button>
-
-    <div id="publishStatus" class="status"></div>
-  </div>
-
-  <!-- PUBLIC FEED -->
-  <div class="card">
-    <div class="feed-header">
-      <h2>🌐 Public Feed</h2>
-      <button class="secondary" onclick="loadMessages()">Refresh</button>
-    </div>
-
-    <div id="feed">
-      <div class="empty">Loading messages...</div>
+  <!-- LOGIN SECTION -->
+  <div id="loginView" class="container login-wrapper">
+    <div class="card" style="width: 100%; max-width: 360px; text-align: center;">
+      <div style="font-size: 40px;">🍔</div>
+      <div class="brand" style="justify-content: center; font-size: 24px; margin-bottom: 4px;">BURGER HUB</div>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Inventory & Management System</p>
+      
+      <form onsubmit="event.preventDefault(); handleLogin();">
+        <label style="text-align:left;">Username</label>
+        <input type="text" id="username" required autocomplete="off">
+        
+        <label style="text-align:left;">Password</label>
+        <input type="password" id="password" required>
+        
+        <button type="submit" class="btn-amber" id="loginBtn">LOG IN</button>
+      </form>
+      <p id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none;"></p>
     </div>
   </div>
 
-</div>
+  <!-- MAIN APP SECTION -->
+  <div id="appView" class="hidden">
+    <header>
+      <div class="brand">🍔 BURGER HUB</div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="userBadge" style="font-size: 12px; color: #cbd5e1;">-</span>
+        <button class="btn-danger" onclick="logout()">Logout</button>
+      </div>
+    </header>
 
-<script>
-const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhV5pMzu2ItwdZSzpIQYEYwRTelf6Ep9_F8YHrxIhgPmTQ0lcyW9MjKe_lFIxAYxe0/exec";
+    <!-- Navigation Menu (7 Core Features) -->
+    <div class="nav-bar">
+      <button class="nav-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="switchTab('catalog')">Catalog</button>
+      <button class="nav-btn" onclick="switchTab('stock')">Stock In/Out</button>
+      <button class="nav-btn" onclick="switchTab('suppliers')">Suppliers</button>
+      <button class="nav-btn" onclick="switchTab('alerts')">Low Stock</button>
+      <button class="nav-btn" onclick="switchTab('logs')">Audit Logs</button>
+      <button class="nav-btn" onclick="switchTab('users')">Users</button>
+    </div>
 
-async function deriveKey(secret) {
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.digest(
-    "SHA-256",
-    encoder.encode(secret)
-  );
+    <div class="container">
+      <!-- 1. DASHBOARD -->
+      <div id="tab-dashboard" class="tab-content card">
+        <h3 style="margin-bottom:12px; color:#f59e0b;">Store Dashboard</h3>
+        <div class="grid-3">
+          <div class="metric-box"><div style="font-size:10px; color:#94a3b8;">ITEMS</div><div class="metric-val" id="m-items">0</div></div>
+          <div class="metric-box"><div style="font-size:10px; color:#94a3b8;">VALUATION</div><div class="metric-val" id="m-val">₱0</div></div>
+          <div class="metric-box"><div style="font-size:10px; color:#94a3b8;">LOW STOCK</div><div class="metric-val" id="m-low" style="color:#ef4444;">0</div></div>
+        </div>
+      </div>
 
-  return crypto.subtle.importKey(
-    "raw",
-    keyMaterial,
-    { name: "AES-GCM" },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
+      <!-- 2. CATALOG -->
+      <div id="tab-catalog" class="tab-content card hidden">
+        <h3 style="color:#f59e0b;">Item Catalog</h3>
+        <div id="catalogTable" class="table-responsive">Loading...</div>
+      </div>
 
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
+      <!-- 3. STOCK IN/OUT -->
+      <div id="tab-stock" class="tab-content card hidden">
+        <h3 style="color:#f59e0b; margin-bottom:8px;">Stock Adjustment</h3>
+        <label>Item ID</label>
+        <input type="text" id="stkId" placeholder="e.g. 101">
+        <label>Movement Type</label>
+        <select id="stkType"><option value="STOCK IN">Stock IN (+)</option><option value="STOCK OUT">Stock OUT (-)</option></select>
+        <label>Quantity</label>
+        <input type="number" id="stkQty" placeholder="0">
+        <label>Notes / Reason</label>
+        <input type="text" id="stkNotes" placeholder="e.g. Daily restocking, Expired patty">
+        <button class="btn-amber" onclick="submitStock()">Submit Stock Transaction</button>
+      </div>
 
-function base64ToUint8Array(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
+      <!-- 4. SUPPLIERS -->
+      <div id="tab-suppliers" class="tab-content card hidden">
+        <h3 style="color:#f59e0b;">Supplier Contacts</h3>
+        <div id="supplierTable" class="table-responsive">Loading...</div>
+      </div>
 
-async function encryptMessage(message, secret) {
-  const key = await deriveKey(secret);
-  const encoder = new TextEncoder();
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+      <!-- 5. LOW STOCK ALERTS -->
+      <div id="tab-alerts" class="tab-content card hidden">
+        <h3 style="color:#ef4444;">Low Stock Items</h3>
+        <div id="alertsTable" class="table-responsive">Loading...</div>
+      </div>
 
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    encoder.encode(message)
-  );
+      <!-- 6. AUDIT LOGS -->
+      <div id="tab-logs" class="tab-content card hidden">
+        <h3 style="color:#f59e0b;">Transaction Audit Trail</h3>
+        <div id="logsTable" class="table-responsive">Loading...</div>
+      </div>
 
-  return arrayBufferToBase64(iv) + ":" + arrayBufferToBase64(encrypted);
-}
+      <!-- 7. USER MANAGEMENT -->
+      <div id="tab-users" class="tab-content card hidden">
+        <h3 style="color:#f59e0b;">System Users</h3>
+        <div id="usersTable" class="table-responsive">Loading...</div>
+      </div>
+    </div>
+  </div>
 
-async function decryptMessage(ciphertext, secret) {
-  const parts = ciphertext.split(":");
-  if (parts.length !== 2) {
-    throw new Error("Invalid ciphertext format.");
-  }
+  <script>
+    // REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL
+    const API_URL = "YOUR_DEPLOYED_APPS_SCRIPT_URL_HERE"; 
+    let sessionToken = null;
 
-  const iv = base64ToUint8Array(parts[0]);
-  const encrypted = base64ToUint8Array(parts[1]);
-  const key = await deriveKey(secret);
-
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    encrypted
-  );
-
-  return new TextDecoder().decode(decrypted);
-}
-
-async function publishMessage() {
-  const username = document.getElementById("username").value.trim();
-  const plaintext = document.getElementById("plaintext").value;
-  const secretKey = document.getElementById("secretKey").value;
-  const status = document.getElementById("publishStatus");
-
-  if (!username) return status.textContent = "Please enter a username.";
-  if (!plaintext) return status.textContent = "Please enter a message.";
-  if (!secretKey) return status.textContent = "Please enter a secret key.";
-
-  try {
-    status.textContent = "Encrypting...";
-    const ciphertext = await encryptMessage(plaintext, secretKey);
-    status.textContent = "Saving message...";
-
-    const payload = {
-      username: username,
-      ciphertext: ciphertext,
-      plaintext: plaintext,
-      key: secretKey
-    };
-
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function() {
-          status.textContent = "✓ Message encrypted and published.";
-          document.getElementById("plaintext").value = "";
-          document.getElementById("secretKey").value = "";
-          loadMessages();
-        })
-        .withFailureHandler(function(error) {
-          status.textContent = "Error: " + error.message;
-        })
-        .saveMessage(payload);
-    } else {
-      fetch(APP_SCRIPT_URL, {
+    function apiCall(payload, callback) {
+      if (sessionToken) payload.token = sessionToken;
+      fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       })
       .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          status.textContent = "✓ Message encrypted and published.";
-          document.getElementById("plaintext").value = "";
-          document.getElementById("secretKey").value = "";
-          loadMessages();
+      .then(data => callback(data))
+      .catch(err => alert("Connection error. Ensure your APPS SCRIPT URL is correct."));
+    }
+
+    function handleLogin() {
+      const u = document.getElementById("username").value;
+      const p = document.getElementById("password").value;
+      const btn = document.getElementById("loginBtn");
+      const err = document.getElementById("loginError");
+
+      btn.innerText = "Authenticating...";
+      btn.disabled = true;
+      err.style.display = "none";
+
+      apiCall({ action: "login", username: u, password: p }, res => {
+        btn.innerText = "LOG IN";
+        btn.disabled = false;
+        if (res.success) {
+          sessionToken = res.token;
+          document.getElementById("userBadge").innerText = res.username + " (" + res.role + ")";
+          document.getElementById("loginView").classList.add("hidden");
+          document.getElementById("appView").classList.remove("hidden");
+          loadDashboard();
         } else {
-          status.textContent = "Error: " + (data.error || "Failed to save.");
+          err.innerText = res.message;
+          err.style.display = "block";
         }
-      })
-      .catch(err => {
-        status.textContent = "Save error: " + err.message;
       });
     }
-  } catch (error) {
-    status.textContent = "Encryption error: " + error.message;
-  }
-}
 
-function loadMessages() {
-  const feed = document.getElementById("feed");
-  feed.innerHTML = '<div class="empty">Loading messages...</div>';
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      event.target.classList.add('active');
 
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(renderMessages)
-      .withFailureHandler(function(error) {
-        feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
-      })
-      .getMessages();
-  } else {
-    fetch(APP_SCRIPT_URL + "?action=getMessages")
-      .then(res => res.json())
-      .then(renderMessages)
-      .catch(error => {
-        feed.innerHTML = '<div class="empty">Unable to load messages: ' + escapeHtml(error.message) + '</div>';
+      if (tabName === 'dashboard') loadDashboard();
+      if (tabName === 'catalog') loadCatalog();
+      if (tabName === 'suppliers') loadSuppliers();
+      if (tabName === 'alerts') loadLowStock();
+      if (tabName === 'logs') loadLogs();
+      if (tabName === 'users') loadUsers();
+    }
+
+    function renderTable(rawMatrix) {
+      if (!rawMatrix || rawMatrix.length === 0) return "<p>No data available.</p>";
+      let html = "<table><tr>";
+      rawMatrix[0].forEach(h => html += `<th>${h}</th>`);
+      html += "</tr>";
+      for (let i = 1; i < rawMatrix.length; i++) {
+        html += "<tr>";
+        rawMatrix[i].forEach(cell => html += `<td>${cell}</td>`);
+        html += "</tr>";
+      }
+      return html + "</table>";
+    }
+
+    function loadDashboard() {
+      apiCall({ action: "getDashboard" }, res => {
+        if (res.success) {
+          document.getElementById("m-items").innerText = res.totalItems;
+          document.getElementById("m-val").innerText = "₱" + res.totalValue;
+          document.getElementById("m-low").innerText = res.lowStock;
+        }
       });
-  }
-}
+    }
 
-function renderMessages(messages) {
-  const feed = document.getElementById("feed");
+    function loadCatalog() { apiCall({ action: "getInventory" }, res => document.getElementById("catalogTable").innerHTML = renderTable(res.data)); }
+    function loadSuppliers() { apiCall({ action: "getSuppliers" }, res => document.getElementById("supplierTable").innerHTML = renderTable(res.data)); }
+    function loadLowStock() { apiCall({ action: "getLowStock" }, res => document.getElementById("alertsTable").innerHTML = renderTable(res.data)); }
+    function loadLogs() { apiCall({ action: "getTransactions" }, res => document.getElementById("logsTable").innerHTML = renderTable(res.data)); }
+    function loadUsers() { apiCall({ action: "getUsers" }, res => document.getElementById("usersTable").innerHTML = renderTable(res.data)); }
 
-  if (!messages || messages.length === 0) {
-    feed.innerHTML = '<div class="empty">No messages have been published yet.</div>';
-    return;
-  }
+    function submitStock() {
+      const itemId = document.getElementById("stkId").value;
+      const type = document.getElementById("stkType").value;
+      let qty = parseInt(document.getElementById("stkQty").value);
+      const notes = document.getElementById("stkNotes").value;
 
-  feed.innerHTML = "";
+      if (!itemId || isNaN(qty)) return alert("Please enter valid item ID and quantity.");
+      if (type === "STOCK OUT") qty = -qty;
 
-  messages.forEach(function(message) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "message";
+      apiCall({ action: "updateStock", itemId: itemId, qtyChange: qty, type: type, notes: notes }, res => {
+        alert(res.success ? "Stock transaction successful!" : "Error: " + res.message);
+        if (res.success) switchTab('catalog');
+      });
+    }
 
-    wrapper.innerHTML = `
-      <div class="message-header">
-        <span class="username">👤 ${escapeHtml(message.username)}</span>
-        <span class="timestamp">${escapeHtml(message.timestamp)}</span>
-      </div>
-      <div class="ciphertext">${escapeHtml(message.ciphertext)}</div>
-      <div class="decrypt-area">
-        <input type="password" class="key-input" placeholder="Try the secret key">
-        <button class="decrypt-button">🔓 Decrypt</button>
-      </div>
-      <div class="result"></div>
-    `;
-
-    const keyInput = wrapper.querySelector(".key-input");
-    const decryptButton = wrapper.querySelector(".decrypt-button");
-    const result = wrapper.querySelector(".result");
-
-    decryptButton.addEventListener("click", async function() {
-      const key = keyInput.value;
-
-      if (!key) {
-        showResult(result, "Please enter a key.", false);
-        return;
-      }
-
-      try {
-        decryptButton.disabled = true;
-        decryptButton.textContent = "Decrypting...";
-
-        const plaintext = await decryptMessage(message.ciphertext, key);
-        showResult(result, "✓ Decrypted message:\n\n" + plaintext, true);
-      } catch (error) {
-        showResult(result, "✗ Incorrect key or corrupted ciphertext.", false);
-      } finally {
-        decryptButton.disabled = false;
-        decryptButton.textContent = "🔓 Decrypt";
-      }
-    });
-
-    feed.appendChild(wrapper);
-  });
-}
-
-function showResult(element, text, success) {
-  element.textContent = text;
-  element.className = "result " + (success ? "success" : "error");
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-window.addEventListener("load", loadMessages);
-</script>
-
+    function logout() {
+      sessionToken = null;
+      document.getElementById("appView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+    }
+  </script>
 </body>
 </html>
