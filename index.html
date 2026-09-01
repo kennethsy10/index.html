@@ -45,20 +45,29 @@
 <body>
 
   <!-- LOGIN SECTION -->
-  <div id="loginView" class="container login-wrapper">
-    <div class="card" style="width: 100%; max-width: 360px; text-align: center;">
-      <div style="font-size: 40px;">🍔</div>
-      <div class="brand" style="justify-content: center; font-size: 24px; margin-bottom: 4px;">BURGER HUB</div>
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Inventory & Management System</p>
-      
-      <form onsubmit="event.preventDefault(); handleLogin();">
-        <label style="text-align:left;">Username</label>
-        <input type="text" id="username" required autocomplete="off">
-        
-        <label style="text-align:left;">Password</label>
-        <input type="password" id="password" required>
-        
-        <button type="submit" class="btn-amber" id="loginBtn">LOG IN</button>
+  <!-- LOGIN CONTAINER -->
+<div id="loginSection" class="login-card">
+  <h2 style="color: #ff9f1c; margin-bottom: 20px;">BURGER HUB</h2>
+  
+  <div class="form-group">
+    <label>USERNAME</label>
+    <input type="text" id="loginUsername" placeholder="Enter username">
+  </div>
+  
+  <div class="form-group" style="position: relative;">
+    <label>PASSWORD</label>
+    <input type="password" id="loginPassword" placeholder="Enter password">
+    <span onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 38px; cursor: pointer; user-select: none; font-size: 14px; color: #a0aec0;">
+      👁️ Show
+    </span>
+  </div>
+
+  <div style="text-align: right; margin-bottom: 15px;">
+    <a href="#" onclick="handleForgotPassword(event)" style="color: #ff9f1c; font-size: 13px; text-decoration: none;">Forgot Password?</a>
+  </div>
+
+  <button class="btn-primary" onclick="submitLogin()">LOG IN</button>
+</div>
       </form>
       <p id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none;"></p>
     </div>
@@ -146,6 +155,26 @@
     // REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzbSWTz9r69ZiC7LZjo1M9MEeevCizB_VNOd88Wtdf6poGN1fgNwEUxiLi9-SIdSMq1Kg/exec";
     let sessionToken = null;
+
+    // Toggle Password Visibility
+function togglePasswordVisibility() {
+  const passwordInput = document.getElementById("loginPassword");
+  const toggleBtn = event.target;
+
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+    toggleBtn.textContent = "🙈 Hide";
+  } else {
+    passwordInput.type = "password";
+    toggleBtn.textContent = "👁️ Show";
+  }
+}
+
+// Handle Forgot Password Click
+function handleForgotPassword(e) {
+  e.preventDefault();
+  alert("Forgot Password?\n\nPlease contact your System Administrator (admin) to reset or retrieve your credentials from the database.");
+}
 
     function apiCall(payload, callback) {
       if (sessionToken) payload.token = sessionToken;
