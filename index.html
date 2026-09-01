@@ -187,9 +187,11 @@
     let sessionToken = null;
 
     // Toggle Password Visibility
+// Toggle Password Visibility
 function togglePasswordVisibility(e) {
+  if (e) e.preventDefault();
   const passwordInput = document.getElementById("loginPassword");
-  const toggleBtn = e.target;
+  const toggleBtn = document.getElementById("showToggleBtn");
 
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
@@ -200,10 +202,10 @@ function togglePasswordVisibility(e) {
   }
 }
 
-// Handle Forgot Password Click
+// Handle Forgot Password
 function handleForgotPassword(e) {
-  e.preventDefault();
-  alert("Forgot Password?\n\nPlease contact your System Administrator (admin) to reset or retrieve your credentials from the database.");
+  if (e) e.preventDefault();
+  alert("Forgot Password?\n\nPlease contact your System Administrator to reset your credentials.");
 }
 
     function apiCall(payload, callback) {
