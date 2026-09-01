@@ -5,38 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BURGER HUB - Inventory System</title>
   <style>
-
-    /* Center the login page and limit its width */
-.login-card {
-  max-width: 400px;
-  width: 90%;
-  margin: 80px auto;
-  padding: 30px;
-  background-color: #1a2332;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  box-sizing: border-box;
-}
-
-/* Ensure form controls stay within container */
-.form-group {
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  padding-right: 70px; /* Space so text doesn't overlap the Show button */
-  box-sizing: border-box;
-}
-
-.btn-primary {
-  width: 100%;
-  padding: 12px;
-}
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Center the login page and limit its width */
+    .login-card {
+      max-width: 400px;
+      width: 90%;
+      margin: 80px auto;
+      padding: 30px;
+      background-color: #1a2332;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+    }
+
+    /* Ensure form controls stay within container */
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      padding-right: 70px; /* Space so text doesn't overlap the Show button */
+      box-sizing: border-box;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: #f59e0b;
+      color: #0f172a;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
     /* Header Styling */
     header { background: #1e293b; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
@@ -69,38 +81,33 @@
     td { padding: 10px; border-bottom: 1px solid #334155; color: #cbd5e1; }
 
     .hidden { display: none !important; }
-    .login-wrapper { display: flex; align-items: center; justify-content: center; min-height: 90vh; }
   </style>
 </head>
 <body>
 
   <!-- LOGIN SECTION -->
-  <!-- LOGIN CONTAINER -->
-<div id="loginSection" class="login-card">
-  <h2 style="color: #ff9f1c; margin-bottom: 20px;">BURGER HUB</h2>
-  
-  <div class="form-group">
-    <label>USERNAME</label>
-    <input type="text" id="loginUsername" placeholder="Enter username">
-  </div>
-  
-  <div class="form-group" style="position: relative;">
-    <label>PASSWORD</label>
-    <input type="password" id="loginPassword" placeholder="Enter password">
-    <span id="showToggleBtn" onclick="togglePasswordVisibility(event)" style="position: absolute; right: 12px; top: 38px; cursor: pointer; user-select: none; font-size: 13px; color: #a0aec0;">
-      👁️ Show
-    </span>
-  </div>
-
-  <div style="text-align: right; margin-bottom: 15px;">
-    <a href="#" onclick="handleForgotPassword(event)" style="color: #ff9f1c; font-size: 13px; text-decoration: none;">Forgot Password?</a>
-  </div>
-
-  <button class="btn-primary" onclick="submitLogin()">LOG IN</button>
-</div>
-      </form>
-      <p id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none;"></p>
+  <div id="loginSection" class="login-card">
+    <h2 style="color: #ff9f1c; margin-bottom: 20px; text-align: center;">BURGER HUB</h2>
+    
+    <div class="form-group">
+      <label>USERNAME</label>
+      <input type="text" id="loginUsername" placeholder="Enter username">
     </div>
+    
+    <div class="form-group" style="position: relative;">
+      <label>PASSWORD</label>
+      <input type="password" id="loginPassword" placeholder="Enter password">
+      <span id="showToggleBtn" onclick="togglePasswordVisibility(event)" style="position: absolute; right: 12px; top: 38px; cursor: pointer; user-select: none; font-size: 13px; color: #a0aec0;">
+        👁️ Show
+      </span>
+    </div>
+
+    <div style="text-align: right; margin-bottom: 15px;">
+      <a href="#" onclick="handleForgotPassword(event)" style="color: #ff9f1c; font-size: 13px; text-decoration: none;">Forgot Password?</a>
+    </div>
+
+    <button id="loginBtn" class="btn-primary" onclick="handleLogin()">LOG IN</button>
+    <p id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 12px; text-align: center; display: none;"></p>
   </div>
 
   <!-- MAIN APP SECTION -->
@@ -182,31 +189,29 @@
   </div>
 
   <script>
-    // REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbzbSWTz9r69ZiC7LZjo1M9MEeevCizB_VNOd88Wtdf6poGN1fgNwEUxiLi9-SIdSMq1Kg/exec";
     let sessionToken = null;
 
     // Toggle Password Visibility
-// Toggle Password Visibility
-function togglePasswordVisibility(e) {
-  if (e) e.preventDefault();
-  const passwordInput = document.getElementById("loginPassword");
-  const toggleBtn = document.getElementById("showToggleBtn");
+    function togglePasswordVisibility(e) {
+      if (e) e.preventDefault();
+      const passwordInput = document.getElementById("loginPassword");
+      const toggleBtn = document.getElementById("showToggleBtn");
 
-  if (passwordInput.type === "password") {
-    passwordInput.type = "text";
-    toggleBtn.textContent = "🙈 Hide";
-  } else {
-    passwordInput.type = "password";
-    toggleBtn.textContent = "👁️ Show";
-  }
-}
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleBtn.textContent = "🙈 Hide";
+      } else {
+        passwordInput.type = "password";
+        toggleBtn.textContent = "👁️ Show";
+      }
+    }
 
-// Handle Forgot Password
-function handleForgotPassword(e) {
-  if (e) e.preventDefault();
-  alert("Forgot Password?\n\nPlease contact your System Administrator to reset your credentials.");
-}
+    // Handle Forgot Password
+    function handleForgotPassword(e) {
+      if (e) e.preventDefault();
+      alert("Forgot Password?\n\nPlease contact your System Administrator to reset your credentials.");
+    }
 
     function apiCall(payload, callback) {
       if (sessionToken) payload.token = sessionToken;
@@ -221,8 +226,8 @@ function handleForgotPassword(e) {
     }
 
     function handleLogin() {
-      const u = document.getElementById("username").value;
-      const p = document.getElementById("password").value;
+      const u = document.getElementById("loginUsername").value;
+      const p = document.getElementById("loginPassword").value;
       const btn = document.getElementById("loginBtn");
       const err = document.getElementById("loginError");
 
@@ -236,7 +241,7 @@ function handleForgotPassword(e) {
         if (res.success) {
           sessionToken = res.token;
           document.getElementById("userBadge").innerText = res.username + " (" + res.role + ")";
-          document.getElementById("loginView").classList.add("hidden");
+          document.getElementById("loginSection").classList.add("hidden");
           document.getElementById("appView").classList.remove("hidden");
           loadDashboard();
         } else {
@@ -307,7 +312,7 @@ function handleForgotPassword(e) {
     function logout() {
       sessionToken = null;
       document.getElementById("appView").classList.add("hidden");
-      document.getElementById("loginView").classList.remove("hidden");
+      document.getElementById("loginSection").classList.remove("hidden");
     }
   </script>
 </body>
