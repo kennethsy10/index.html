@@ -5,6 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BURGER HUB - Inventory System</title>
   <style>
+
+    /* Center the login page and limit its width */
+.login-card {
+  max-width: 400px;
+  width: 90%;
+  margin: 80px auto;
+  padding: 30px;
+  background-color: #1a2332;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+/* Ensure form controls stay within container */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  padding-right: 70px; /* Space so text doesn't overlap the Show button */
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+}
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
 
@@ -157,9 +187,9 @@
     let sessionToken = null;
 
     // Toggle Password Visibility
-function togglePasswordVisibility() {
+function togglePasswordVisibility(e) {
   const passwordInput = document.getElementById("loginPassword");
-  const toggleBtn = event.target;
+  const toggleBtn = e.target;
 
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
