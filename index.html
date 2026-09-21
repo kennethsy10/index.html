@@ -49,6 +49,7 @@
     th { background: #0f172a; color: #f59e0b; padding: 10px; border-bottom: 1px solid #334155; }
     td { padding: 10px; border-bottom: 1px solid #334155; color: #cbd5e1; }
 
+    .otp-input-box { text-align: center; font-size: 22px; letter-spacing: 8px; font-weight: bold; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -57,19 +58,35 @@
   <!-- LOGIN SECTION -->
   <div id="loginSection" class="login-card">
     <h2 style="color: #ff9f1c; margin-bottom: 20px; text-align: center;">BURGER HUB</h2>
-    <div class="form-group">
-      <label>USERNAME</label>
-      <input type="text" id="loginUsername" placeholder="Enter username">
+    
+    <!-- STEP 1: CREDENTIALS -->
+    <div id="stepCredentials">
+      <div class="form-group">
+        <label>USERNAME</label>
+        <input type="text" id="loginUsername" placeholder="Enter username">
+      </div>
+      <div class="form-group" style="position: relative;">
+        <label>PASSWORD</label>
+        <input type="password" id="loginPassword" placeholder="Enter password">
+        <span id="showToggleBtn" onclick="togglePasswordVisibility(event)" style="position: absolute; right: 12px; top: 38px; cursor: pointer; font-size: 13px; color: #a0aec0;">👁️ Show</span>
+      </div>
+      <div style="text-align: right; margin-bottom: 15px;">
+        <a href="#" onclick="handleForgotPassword(event)" style="color: #ff9f1c; font-size: 13px; text-decoration: none;">Forgot Password?</a>
+      </div>
+      <button id="loginBtn" class="btn-primary" onclick="handleRequestOtp()">SEND OTP</button>
     </div>
-    <div class="form-group" style="position: relative;">
-      <label>PASSWORD</label>
-      <input type="password" id="loginPassword" placeholder="Enter password">
-      <span id="showToggleBtn" onclick="togglePasswordVisibility(event)" style="position: absolute; right: 12px; top: 38px; cursor: pointer; font-size: 13px; color: #a0aec0;">👁️ Show</span>
+
+    <!-- STEP 2: OTP VERIFICATION -->
+    <div id="stepOtp" class="hidden">
+      <p id="otpNotice" style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px; text-align: center;"></p>
+      <div class="form-group">
+        <label>ENTER 6-DIGIT OTP</label>
+        <input type="text" id="otpCode" class="otp-input-box" maxlength="6" placeholder="123456">
+      </div>
+      <button id="verifyBtn" class="btn-primary" onclick="handleVerifyOtp()">VERIFY & LOG IN</button>
+      <button style="background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; margin-top: 10px;" onclick="resetToStep1()">← Back to Login</button>
     </div>
-    <div style="text-align: right; margin-bottom: 15px;">
-      <a href="#" onclick="handleForgotPassword(event)" style="color: #ff9f1c; font-size: 13px; text-decoration: none;">Forgot Password?</a>
-    </div>
-    <button id="loginBtn" class="btn-primary" onclick="handleLogin()">LOG IN</button>
+
     <p id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 12px; text-align: center; display: none;"></p>
   </div>
 
@@ -170,11 +187,12 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyiPLUzulnYidBGQ4Ii5ssfjV9S7VdmfJQ6meTAinufEyaW3DVzRIArOy7Ejs-TZBiKpg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzEbfVZPWBJ1-P6n9Fzdw84mDpw19mQ3BXlnyqBMcPOuLm513lyb6XSJ-Djm486kKyDYA/exec";
     
     let sessionToken = sessionStorage.getItem("sessionToken");
     let currentUserRole = sessionStorage.getItem("userRole");
     let currentUsername = sessionStorage.getItem("userName");
+    let pendingUsername = "";
 
     window.addEventListener("DOMContentLoaded", () => {
       if (sessionToken && currentUserRole && currentUsername) {
@@ -214,18 +232,56 @@
       .catch(err => alert("Connection error. Ensure your APPS SCRIPT URL is correct."));
     }
 
-    function handleLogin() {
+    // OTP STEP 1: Request OTP
+    function handleRequestOtp() {
       const u = document.getElementById("loginUsername").value.trim();
       const p = document.getElementById("loginPassword").value.trim();
       const btn = document.getElementById("loginBtn");
       const err = document.getElementById("loginError");
 
-      btn.innerText = "Authenticating...";
+      if (!u || !p) {
+        err.innerText = "Please enter both username and password.";
+        err.style.display = "block";
+        return;
+      }
+
+      btn.innerText = "Sending Code...";
       btn.disabled = true;
       err.style.display = "none";
 
-      apiCall({ action: "login", username: u, password: p }, res => {
-        btn.innerText = "LOG IN";
+      apiCall({ action: "requestOtp", username: u, password: p }, res => {
+        btn.innerText = "SEND OTP";
+        btn.disabled = false;
+        if (res.success) {
+          pendingUsername = res.username;
+          document.getElementById("stepCredentials").classList.add("hidden");
+          document.getElementById("stepOtp").classList.remove("hidden");
+          document.getElementById("otpNotice").innerText = res.message;
+        } else {
+          err.innerText = res.message;
+          err.style.display = "block";
+        }
+      });
+    }
+
+    // OTP STEP 2: Verify OTP Code
+    function handleVerifyOtp() {
+      const otp = document.getElementById("otpCode").value.trim();
+      const btn = document.getElementById("verifyBtn");
+      const err = document.getElementById("loginError");
+
+      if (!otp || otp.length !== 6) {
+        err.innerText = "Please enter a valid 6-digit OTP code.";
+        err.style.display = "block";
+        return;
+      }
+
+      btn.innerText = "Verifying...";
+      btn.disabled = true;
+      err.style.display = "none";
+
+      apiCall({ action: "verifyOtp", username: pendingUsername, otp: otp }, res => {
+        btn.innerText = "VERIFY & LOG IN";
         btn.disabled = false;
         if (res.success) {
           sessionToken = res.token;
@@ -242,6 +298,13 @@
           err.style.display = "block";
         }
       });
+    }
+
+    function resetToStep1() {
+      document.getElementById("stepOtp").classList.add("hidden");
+      document.getElementById("stepCredentials").classList.remove("hidden");
+      document.getElementById("loginError").style.display = "none";
+      document.getElementById("otpCode").value = "";
     }
 
     function showAppView(username, role) {
@@ -276,7 +339,7 @@
       if (!rawMatrix || rawMatrix.length === 0) return "<p>No data available.</p>";
       let html = "<table><tr>";
       rawMatrix[0].forEach(h => html += `<th>${h}</th>`);
-      html += "<th>ACTION</th></tr>"; // Extra header for Delete action
+      html += "<th>ACTION</th></tr>";
 
       for (let i = 1; i < rawMatrix.length; i++) {
         html += "<tr>";
@@ -317,7 +380,6 @@
     function loadLogs() { apiCall({ action: "getTransactions" }, res => document.getElementById("logsTable").innerHTML = renderTable(res.data)); }
     function loadUsers() { apiCall({ action: "getUsers" }, res => document.getElementById("usersTable").innerHTML = renderTable(res.data)); }
 
-    // 1. ADD NEW ITEM FUNCTION
     function submitNewItem() {
       const id = document.getElementById("addId").value.trim();
       const name = document.getElementById("addName").value.trim();
@@ -326,9 +388,7 @@
       const price = parseFloat(document.getElementById("addPrice").value);
       const min = parseInt(document.getElementById("addMin").value);
 
-      if (!id || !name || isNaN(qty) || isNaN(price)) {
-        return alert("Please fill in all item fields correctly.");
-      }
+      if (!id || !name || isNaN(qty) || isNaN(price)) return alert("Please fill in all item fields correctly.");
 
       apiCall({ action: "addItem", itemId: id, itemName: name, category: cat, qty: qty, price: price, minStock: min }, res => {
         alert(res.success ? "Item added successfully!" : "Error: " + res.message);
@@ -344,17 +404,14 @@
       });
     }
 
-    // 2. DELETE ITEM FUNCTION
     function deleteItem(itemId) {
       if (!confirm(`Are you sure you want to delete Item ID: ${itemId}?`)) return;
-
       apiCall({ action: "deleteItem", itemId: itemId }, res => {
         alert(res.success ? "Item deleted successfully!" : "Error: " + res.message);
         if (res.success) loadCatalog();
       });
     }
 
-    // 3. STOCK ADJUSTMENT FUNCTION
     function submitStock() {
       const itemId = document.getElementById("stkId").value.trim();
       const type = document.getElementById("stkType").value;
@@ -379,8 +436,10 @@
       sessionToken = null;
       currentUserRole = null;
       currentUsername = null;
+      pendingUsername = "";
       sessionStorage.clear();
 
+      resetToStep1();
       document.getElementById("appView").classList.add("hidden");
       document.getElementById("loginSection").classList.remove("hidden");
     }
