@@ -296,19 +296,20 @@
     function loadUsers() { apiCall({ action: "getUsers" }, res => document.getElementById("usersTable").innerHTML = renderTable(res.data)); }
 
     function submitStock() {
-      const itemId = document.getElementById("stkId").value;
-      const type = document.getElementById("stkType").value;
-      let qty = parseInt(document.getElementById("stkQty").value);
-      const notes = document.getElementById("stkNotes").value;
+  const itemId = document.getElementById("stkId").value;
+  const type = document.getElementById("stkType").value;
+  let qty = parseInt(document.getElementById("stkQty").value);
+  const notes = document.getElementById("stkNotes").value;
 
-      if (!itemId || isNaN(qty)) return alert("Please enter valid item ID and quantity.");
-      if (type === "STOCK OUT") qty = -qty;
+  if (!itemId || isNaN(qty)) return alert("Please enter valid item ID and quantity.");
+  if (type === "STOCK OUT") qty = -qty;
 
-      apiCall({ action: "updateStock", itemId: itemId, qtyChange: qty, type: type, notes: notes }, res => {
-        alert(res.success ? "Stock transaction successful!" : "Error: " + res.message);
-        if (res.success) switchTab('catalog');
-      });
-    }
+  // Changed action from "updateStock" to "adjustStock"
+  apiCall({ action: "adjustStock", itemId: itemId, qtyChange: qty, type: type, notes: notes }, res => {
+    alert(res.success ? "Stock transaction successful!" : "Error: " + res.message);
+    if (res.success) switchTab('catalog');
+  });
+}
 
     function logout() {
       sessionToken = null;
