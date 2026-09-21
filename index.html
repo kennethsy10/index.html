@@ -191,131 +191,197 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxEuuGB8icWDktmS_lN6DzrlyIRykg3N9zNCJixKYp31VbzcW2f4U6xJvxhzdxks2156w/exec";
-    let sessionToken = null;
+  
+  let sessionToken = sessionStorage.getItem("sessionToken");
+  let currentUserRole = sessionStorage.getItem("userRole");
+  let currentUsername = sessionStorage.getItem("userName");
 
-    // Toggle Password Visibility
-    function togglePasswordVisibility(e) {
-      if (e) e.preventDefault();
-      const passwordInput = document.getElementById("loginPassword");
-      const toggleBtn = document.getElementById("showToggleBtn");
-
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggleBtn.textContent = "🙈 Hide";
-      } else {
-        passwordInput.type = "password";
-        toggleBtn.textContent = "👁️ Show";
-      }
+  // Restore session on page refresh
+  window.addEventListener("DOMContentLoaded", () => {
+    if (sessionToken && currentUserRole && currentUsername) {
+      showAppView(currentUsername, currentUserRole);
     }
-
-    // Handle Forgot Password
-    function handleForgotPassword(e) {
-      if (e) e.preventDefault();
-      alert("Forgot Password?\n\nPlease contact your System Administrator to reset your credentials.");
-    }
-
-    function apiCall(payload, callback) {
-      if (sessionToken) payload.token = sessionToken;
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => callback(data))
-      .catch(err => alert("Connection error. Ensure your APPS SCRIPT URL is correct."));
-    }
-
-    function handleLogin() {
-      const u = document.getElementById("loginUsername").value;
-      const p = document.getElementById("loginPassword").value;
-      const btn = document.getElementById("loginBtn");
-      const err = document.getElementById("loginError");
-
-      btn.innerText = "Authenticating...";
-      btn.disabled = true;
-      err.style.display = "none";
-
-      apiCall({ action: "login", username: u, password: p }, res => {
-        btn.innerText = "LOG IN";
-        btn.disabled = false;
-        if (res.success) {
-          sessionToken = res.token;
-          document.getElementById("userBadge").innerText = res.username + " (" + res.role + ")";
-          document.getElementById("loginSection").classList.add("hidden");
-          document.getElementById("appView").classList.remove("hidden");
-          loadDashboard();
-        } else {
-          err.innerText = res.message;
-          err.style.display = "block";
-        }
-      });
-    }
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById('tab-' + tabName).classList.remove('hidden');
-      event.target.classList.add('active');
-
-      if (tabName === 'dashboard') loadDashboard();
-      if (tabName === 'catalog') loadCatalog();
-      if (tabName === 'suppliers') loadSuppliers();
-      if (tabName === 'alerts') loadLowStock();
-      if (tabName === 'logs') loadLogs();
-      if (tabName === 'users') loadUsers();
-    }
-
-    function renderTable(rawMatrix) {
-      if (!rawMatrix || rawMatrix.length === 0) return "<p>No data available.</p>";
-      let html = "<table><tr>";
-      rawMatrix[0].forEach(h => html += `<th>${h}</th>`);
-      html += "</tr>";
-      for (let i = 1; i < rawMatrix.length; i++) {
-        html += "<tr>";
-        rawMatrix[i].forEach(cell => html += `<td>${cell}</td>`);
-        html += "</tr>";
-      }
-      return html + "</table>";
-    }
-
-    function loadDashboard() {
-      apiCall({ action: "getDashboard" }, res => {
-        if (res.success) {
-          document.getElementById("m-items").innerText = res.totalItems;
-          document.getElementById("m-val").innerText = "₱" + res.totalValue;
-          document.getElementById("m-low").innerText = res.lowStock;
-        }
-      });
-    }
-
-    function loadCatalog() { apiCall({ action: "getInventory" }, res => document.getElementById("catalogTable").innerHTML = renderTable(res.data)); }
-    function loadSuppliers() { apiCall({ action: "getSuppliers" }, res => document.getElementById("supplierTable").innerHTML = renderTable(res.data)); }
-    function loadLowStock() { apiCall({ action: "getLowStock" }, res => document.getElementById("alertsTable").innerHTML = renderTable(res.data)); }
-    function loadLogs() { apiCall({ action: "getTransactions" }, res => document.getElementById("logsTable").innerHTML = renderTable(res.data)); }
-    function loadUsers() { apiCall({ action: "getUsers" }, res => document.getElementById("usersTable").innerHTML = renderTable(res.data)); }
-
-    function submitStock() {
-  const itemId = document.getElementById("stkId").value;
-  const type = document.getElementById("stkType").value;
-  let qty = parseInt(document.getElementById("stkQty").value);
-  const notes = document.getElementById("stkNotes").value;
-
-  if (!itemId || isNaN(qty)) return alert("Please enter valid item ID and quantity.");
-  if (type === "STOCK OUT") qty = -qty;
-
-  // Changed action from "updateStock" to "adjustStock"
-  apiCall({ action: "adjustStock", itemId: itemId, qtyChange: qty, type: type, notes: notes }, res => {
-    alert(res.success ? "Stock transaction successful!" : "Error: " + res.message);
-    if (res.success) switchTab('catalog');
   });
-}
 
-    function logout() {
-      sessionToken = null;
-      document.getElementById("appView").classList.add("hidden");
-      document.getElementById("loginSection").classList.remove("hidden");
+  function togglePasswordVisibility(e) {
+    if (e) e.preventDefault();
+    const passwordInput = document.getElementById("loginPassword");
+    const toggleBtn = document.getElementById("showToggleBtn");
+
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      toggleBtn.textContent = "🙈 Hide";
+    } else {
+      passwordInput.type = "password";
+      toggleBtn.textContent = "👁️ Show";
     }
-  </script>
+  }
+
+  function handleForgotPassword(e) {
+    if (e) e.preventDefault();
+    alert("Forgot Password?\n\nPlease contact your System Administrator to reset your credentials.");
+  }
+
+  function apiCall(payload, callback) {
+    if (sessionToken) payload.token = sessionToken;
+    
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      // Security Interceptor: Handle expired/invalid sessions automatically
+      if (!data.success && (data.message === "Unauthorized or session expired." || data.message === "Access denied.")) {
+        alert("Session Expired or Unauthorized Access: " + data.message);
+        logout();
+        return;
+      }
+      callback(data);
+    })
+    .catch(err => alert("Connection error. Ensure your APPS SCRIPT URL is correct."));
+  }
+
+  function handleLogin() {
+    const u = document.getElementById("loginUsername").value.trim();
+    const p = document.getElementById("loginPassword").value.trim();
+    const btn = document.getElementById("loginBtn");
+    const err = document.getElementById("loginError");
+
+    if (!u || !p) {
+      err.innerText = "Please enter both username and password.";
+      err.style.display = "block";
+      return;
+    }
+
+    btn.innerText = "Authenticating...";
+    btn.disabled = true;
+    err.style.display = "none";
+
+    apiCall({ action: "login", username: u, password: p }, res => {
+      btn.innerText = "LOG IN";
+      btn.disabled = false;
+      if (res.success) {
+        // Securely store token and user info in browser session
+        sessionToken = res.token;
+        currentUserRole = res.role;
+        currentUsername = res.username;
+
+        sessionStorage.setItem("sessionToken", sessionToken);
+        sessionStorage.setItem("userRole", currentUserRole);
+        sessionStorage.setItem("userName", currentUsername);
+
+        document.getElementById("loginUsername").value = "";
+        document.getElementById("loginPassword").value = "";
+
+        showAppView(currentUsername, currentUserRole);
+      } else {
+        err.innerText = res.message;
+        err.style.display = "block";
+      }
+    });
+  }
+
+  function showAppView(username, role) {
+    document.getElementById("userBadge").innerText = `${username} (${role})`;
+    document.getElementById("loginSection").classList.add("hidden");
+    document.getElementById("appView").classList.remove("hidden");
+
+    // UI Role Guard: Hide "Users" tab if not Admin
+    const userTabBtn = document.querySelector("button[onclick=\"switchTab('users')\"]");
+    if (userTabBtn) {
+      if (role.toLowerCase() !== "admin") {
+        userTabBtn.style.display = "none";
+      } else {
+        userTabBtn.style.display = "inline-block";
+      }
+    }
+
+    switchTab("dashboard");
+  }
+
+  function switchTab(tabName) {
+    // Client-side guard for restricted tabs
+    if (tabName === "users" && currentUserRole.toLowerCase() !== "admin") {
+      alert("Access Denied: Admins only.");
+      return;
+    }
+
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    
+    const activeBtn = document.querySelector(`.nav-btn[onclick="switchTab('${tabName}')"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+    if (tabName === 'dashboard') loadDashboard();
+    if (tabName === 'catalog') loadCatalog();
+    if (tabName === 'suppliers') loadSuppliers();
+    if (tabName === 'alerts') loadLowStock();
+    if (tabName === 'logs') loadLogs();
+    if (tabName === 'users') loadUsers();
+  }
+
+  function renderTable(rawMatrix) {
+    if (!rawMatrix || rawMatrix.length === 0) return "<p>No data available.</p>";
+    let html = "<table><tr>";
+    rawMatrix[0].forEach(h => html += `<th>${h}</th>`);
+    html += "</tr>";
+    for (let i = 1; i < rawMatrix.length; i++) {
+      html += "<tr>";
+      rawMatrix[i].forEach(cell => html += `<td>${cell}</td>`);
+      html += "</tr>";
+    }
+    return html + "</table>";
+  }
+
+  function loadDashboard() {
+    apiCall({ action: "getDashboard" }, res => {
+      if (res.success) {
+        document.getElementById("m-items").innerText = res.totalItems;
+        document.getElementById("m-val").innerText = "₱" + res.totalValue;
+        document.getElementById("m-low").innerText = res.lowStock;
+      }
+    });
+  }
+
+  function loadCatalog() { apiCall({ action: "getInventory" }, res => document.getElementById("catalogTable").innerHTML = renderTable(res.data)); }
+  function loadSuppliers() { apiCall({ action: "getSuppliers" }, res => document.getElementById("supplierTable").innerHTML = renderTable(res.data)); }
+  function loadLowStock() { apiCall({ action: "getLowStock" }, res => document.getElementById("alertsTable").innerHTML = renderTable(res.data)); }
+  function loadLogs() { apiCall({ action: "getTransactions" }, res => document.getElementById("logsTable").innerHTML = renderTable(res.data)); }
+  function loadUsers() { apiCall({ action: "getUsers" }, res => document.getElementById("usersTable").innerHTML = renderTable(res.data)); }
+
+  function submitStock() {
+    const itemId = document.getElementById("stkId").value;
+    const type = document.getElementById("stkType").value;
+    let qty = parseInt(document.getElementById("stkQty").value);
+    const notes = document.getElementById("stkNotes").value;
+
+    if (!itemId || isNaN(qty) || qty <= 0) return alert("Please enter a valid item ID and positive quantity.");
+    if (type === "STOCK OUT") qty = -qty;
+
+    apiCall({ action: "adjustStock", itemId: itemId, qtyChange: qty, type: type, notes: notes }, res => {
+      alert(res.success ? "Stock transaction successful!" : "Error: " + res.message);
+      if (res.success) {
+        document.getElementById("stkId").value = "";
+        document.getElementById("stkQty").value = "";
+        document.getElementById("stkNotes").value = "";
+        switchTab('catalog');
+      }
+    });
+  }
+
+  function logout() {
+    sessionToken = null;
+    currentUserRole = null;
+    currentUsername = null;
+    sessionStorage.clear();
+
+    document.getElementById("appView").classList.add("hidden");
+    document.getElementById("loginSection").classList.remove("hidden");
+  }
+</script>
 </body>
 </html>
